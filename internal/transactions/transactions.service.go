@@ -3,7 +3,7 @@ package transactions
 import "finance-tracker/internal/models"
 
 type TransactionsServiceInterface interface {
-	CreateTransaction(dto TransactionRequestDto) (*TransactionResponseDto, error)
+	CreateTransaction(dto *TransactionRequestDto) (*TransactionResponseDto, error)
 }
 
 type TransactionsService struct {
@@ -16,7 +16,7 @@ func NewTransactionsService(transactionsRepository TransactionsRepositoryInterfa
 	}
 }
 
-func (service *TransactionsService) CreateTransaction(dto TransactionRequestDto) (*TransactionResponseDto, error) {
+func (service *TransactionsService) CreateTransaction(dto *TransactionRequestDto) (*TransactionResponseDto, error) {
 	if err := dto.Type.Validate(); err != nil {
 		return nil, err
 	}

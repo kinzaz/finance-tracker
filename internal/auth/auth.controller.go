@@ -1,8 +1,9 @@
 package auth
 
 import (
-	"encoding/json"
 	"finance-tracker/pkg/jwt"
+	"finance-tracker/pkg/request"
+	"finance-tracker/pkg/response"
 	"net/http"
 )
 
@@ -21,28 +22,25 @@ func NewAuthController(router *http.ServeMux, service AuthServiceInterface) {
 
 func (controller AuthController) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		/* Вынести в пакет */
-		var dto RegisterRequestDto
-		decoder := json.NewDecoder(r.Body)
-		decoder.Decode(&dto)
 
-		response, _ := controller.AuthService.Register(dto)
+		dto, err := request.HandleBody[RegisterRequestDto](w, r)
+		if err != nil {
+			return
+		}
 
-		/* Вынести в пакет */
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(response)
+		res, _ := controller.AuthService.Register(dto)
+
+		response.Json(w, res, http.StatusCreated)
 	}
 }
 
 func (controller AuthController) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		/* Вынести в пакет */
-		var dto LoginRequestDto
-		decoder := json.NewDecoder(r.Body)
-		decoder.Decode(&dto)
+		dto, err := request.HandleBody[LoginRequestDto](w, r)
+		if err != nil {
+			return
+		}
 
-		// response, err := controller.AuthRepository.login(dto)
 		email, err := controller.AuthService.Login(dto)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -58,13 +56,10 @@ func (controller AuthController) Login() http.HandlerFunc {
 			return
 		}
 
-		response := &LoginResponseDto{
+		res := &LoginResponseDto{
 			Access_token: token,
 		}
 
-		/* Вынести в пакет */
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(response)
+		response.Json(w, res, http.StatusCreated)
 	}
 }

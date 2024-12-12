@@ -1,10 +1,11 @@
 package transactions
 
 import (
-	"encoding/json"
 	"errors"
 	"finance-tracker/internal/errs"
 	"finance-tracker/internal/user"
+	"finance-tracker/pkg/request"
+	"finance-tracker/pkg/response"
 	"net/http"
 )
 
@@ -24,15 +25,12 @@ func NewTransactionsController(router *http.ServeMux, transactionsService Transa
 
 func (controller *TransactionsController) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		/* Вынести в пакет */
-		var dto TransactionRequestDto
-		decoder := json.NewDecoder(r.Body)
-		if err := decoder.Decode(&dto); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+		dto, err := request.HandleBody[TransactionRequestDto](w, r)
+		if err != nil {
 			return
 		}
 
-		_, err := controller.UserRepository.FindById(dto.UserID)
+		_, err = controller.UserRepository.FindById(dto.UserID)
 		if err != nil {
 			if errors.Is(err, errs.ErrUserNotFound) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -43,7 +41,7 @@ func (controller *TransactionsController) Create() http.HandlerFunc {
 			}
 		}
 
-		response, err := controller.TransactionService.CreateTransaction(dto)
+		res, err := controller.TransactionService.CreateTransaction(dto)
 		if err != nil {
 			if errors.Is(err, errs.ErrInvalidTransactionType) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -54,9 +52,6 @@ func (controller *TransactionsController) Create() http.HandlerFunc {
 			}
 		}
 
-		/* Вынести в пакет */
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(response)
+		response.Json(w, res, http.StatusCreated)
 	}
 }

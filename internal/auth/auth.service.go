@@ -9,8 +9,8 @@ import (
 )
 
 type AuthServiceInterface interface {
-	Register(dto RegisterRequestDto) (*RegisterResponseDto, error)
-	Login(dto LoginRequestDto) (string, error)
+	Register(dto *RegisterRequestDto) (*RegisterResponseDto, error)
+	Login(dto *LoginRequestDto) (string, error)
 }
 
 type AuthService struct {
@@ -23,7 +23,7 @@ func NewAuthService(userRepository user.UserRepositoryInterface) *AuthService {
 	}
 }
 
-func (service *AuthService) Login(dto LoginRequestDto) (string, error) {
+func (service *AuthService) Login(dto *LoginRequestDto) (string, error) {
 	existedUser, _ := service.UserRepository.FindByEmail(dto.Email)
 
 	if existedUser == nil {
@@ -38,7 +38,7 @@ func (service *AuthService) Login(dto LoginRequestDto) (string, error) {
 	return existedUser.Email, nil
 }
 
-func (service *AuthService) Register(dto RegisterRequestDto) (*RegisterResponseDto, error) {
+func (service *AuthService) Register(dto *RegisterRequestDto) (*RegisterResponseDto, error) {
 	existedUser, _ := service.UserRepository.FindByEmail(dto.Email)
 	if existedUser != nil {
 		return nil, errors.New("такой пользователь уже зарегистрирован")
