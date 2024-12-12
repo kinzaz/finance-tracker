@@ -11,7 +11,7 @@ type AuthController struct {
 }
 
 func NewAuthController(router *http.ServeMux, service AuthServiceInterface) {
-	handler := AuthController{
+	handler := &AuthController{
 		AuthService: service,
 	}
 

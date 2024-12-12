@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"finance-tracker/internal/models"
 	"finance-tracker/internal/user"
 
 	"golang.org/x/crypto/bcrypt"
@@ -48,7 +49,7 @@ func (service *AuthService) Register(dto RegisterRequestDto) (*RegisterResponseD
 		return nil, err
 	}
 
-	userEntity := &user.User{
+	userEntity := &models.User{
 		Name:     dto.Name,
 		Email:    dto.Email,
 		Password: string(hashedPassword),

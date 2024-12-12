@@ -1,7 +1,7 @@
 package main
 
 import (
-	"finance-tracker/internal/user"
+	"finance-tracker/internal/models"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -21,5 +21,5 @@ func main() {
 		panic(err)
 	}
 
-	db.AutoMigrate(&user.User{})
+	db.AutoMigrate(&models.User{}, &models.Transaction{})
 }
