@@ -18,6 +18,7 @@ func NewTransactionsController(router *http.ServeMux, transactionsService Transa
 	}
 
 	router.HandleFunc("POST /transaction", handler.Create())
+	router.HandleFunc("DELETE /transaction/{id}", handler.Delete())
 }
 
 func (controller *TransactionsController) Create() http.HandlerFunc {
@@ -42,5 +43,28 @@ func (controller *TransactionsController) Create() http.HandlerFunc {
 		}
 
 		response.Json(w, res, http.StatusCreated)
+	}
+}
+
+func (controller *TransactionsController) Delete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := request.GetParam[uint](r, "id")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = controller.TransactionService.DeleteTransaction(id)
+		if err != nil {
+			if errors.Is(err, errs.ErrTransactionNotFound) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		response.Json(w, nil, http.StatusOK)
 	}
 }

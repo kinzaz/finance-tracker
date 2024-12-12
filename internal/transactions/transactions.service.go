@@ -7,6 +7,7 @@ import (
 
 type TransactionsServiceInterface interface {
 	CreateTransaction(dto *TransactionRequestDto) (*TransactionResponseDto, error)
+	DeleteTransaction(id uint) error
 }
 
 type TransactionsService struct {
@@ -54,4 +55,11 @@ func (service *TransactionsService) CreateTransaction(dto *TransactionRequestDto
 	}
 
 	return response, nil
+}
+
+func (service *TransactionsService) DeleteTransaction(id uint) error {
+	if err := service.TransactionsRepository.Delete(id); err != nil {
+		return err
+	}
+	return nil
 }

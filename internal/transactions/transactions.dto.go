@@ -14,7 +14,7 @@ type TransactionRequestDto struct {
 }
 
 type TransactionResponseDto struct {
-	ID          uint
+	ID          uint                  `json:"id"`
 	UserID      uint                  `json:"user_id"`
 	Type        types.TransactionType `json:"type"`
 	Amount      float64               `json:"amount"`
