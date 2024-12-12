@@ -22,11 +22,11 @@ func main() {
 
 	/* Services */
 	authService := auth.NewAuthService(userRepository)
-	transactionsService := transactions.NewTransactionsService(transactionsRepository)
+	transactionsService := transactions.NewTransactionsService(transactionsRepository, userRepository)
 
 	/* Controllers */
 	auth.NewAuthController(router, authService)
-	transactions.NewTransactionsController(router, transactionsService, userRepository)
+	transactions.NewTransactionsController(router, transactionsService)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%v", conf.Port),

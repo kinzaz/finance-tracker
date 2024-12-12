@@ -1,6 +1,9 @@
 package transactions
 
-import "finance-tracker/internal/models"
+import (
+	"finance-tracker/internal/models"
+	"finance-tracker/internal/user"
+)
 
 type TransactionsServiceInterface interface {
 	CreateTransaction(dto *TransactionRequestDto) (*TransactionResponseDto, error)
@@ -8,16 +11,23 @@ type TransactionsServiceInterface interface {
 
 type TransactionsService struct {
 	TransactionsRepository TransactionsRepositoryInterface
+	UserRepository         user.UserRepositoryInterface
 }
 
-func NewTransactionsService(transactionsRepository TransactionsRepositoryInterface) *TransactionsService {
+func NewTransactionsService(transactionsRepository TransactionsRepositoryInterface, userRepository user.UserRepositoryInterface) *TransactionsService {
 	return &TransactionsService{
 		TransactionsRepository: transactionsRepository,
+		UserRepository:         userRepository,
 	}
 }
 
 func (service *TransactionsService) CreateTransaction(dto *TransactionRequestDto) (*TransactionResponseDto, error) {
 	if err := dto.Type.Validate(); err != nil {
+		return nil, err
+	}
+
+	_, err := service.UserRepository.FindById(dto.UserID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -29,7 +39,7 @@ func (service *TransactionsService) CreateTransaction(dto *TransactionRequestDto
 		Date:        dto.Date,
 	}
 
-	_, err := service.TransactionsRepository.Create(transactionEntity)
+	_, err = service.TransactionsRepository.Create(transactionEntity)
 	if err != nil {
 		return nil, err
 	}
