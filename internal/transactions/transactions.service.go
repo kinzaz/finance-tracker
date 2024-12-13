@@ -24,10 +24,6 @@ func NewTransactionsService(transactionsRepository TransactionsRepositoryInterfa
 }
 
 func (service *TransactionsService) CreateTransaction(userId uint, dto *TransactionRequestDto) (*TransactionResponseDto, error) {
-	if err := dto.Type.Validate(); err != nil {
-		return nil, err
-	}
-
 	_, err := service.UserRepository.FindById(userId)
 	if err != nil {
 		return nil, err

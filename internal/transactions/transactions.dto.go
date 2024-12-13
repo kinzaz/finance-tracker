@@ -6,10 +6,10 @@ import (
 )
 
 type TransactionRequestDto struct {
-	Type        types.TransactionType `json:"type"`
-	Amount      float64               `json:"amount"`
-	Description string                `json:"description"`
-	Date        time.Time             `json:"date"`
+	Type        types.TransactionType `json:"type" validate:"required,oneof=income expense"`
+	Amount      float64               `json:"amount" validate:"required"`
+	Description string                `json:"description" validate:"required"`
+	Date        time.Time             `json:"date" validate:"required"`
 }
 
 type TransactionResponseDto struct {
