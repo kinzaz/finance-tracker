@@ -6,6 +6,7 @@ import (
 	"finance-tracker/internal/transactions"
 	"finance-tracker/internal/user"
 	"finance-tracker/pkg/database"
+	"finance-tracker/pkg/middleware"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,7 +31,7 @@ func main() {
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%v", conf.Port),
-		Handler: router,
+		Handler: middleware.CORS(router),
 	}
 
 	if err := server.ListenAndServe(); err != nil {
