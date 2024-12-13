@@ -14,6 +14,7 @@ type TransactionsRepositoryInterface interface {
 	Create(transaction *models.Transaction) (*models.Transaction, error)
 	Delete(id uint) error
 	FindTransactionById(id uint) error
+	GetTransactionsByUserId(userId uint) ([]models.Transaction, error)
 }
 
 type TransactionsRepository struct {
@@ -58,4 +59,15 @@ func (repo *TransactionsRepository) FindTransactionById(id uint) error {
 		return err
 	}
 	return nil
+}
+
+func (repo *TransactionsRepository) GetTransactionsByUserId(userId uint) ([]models.Transaction, error) {
+	var transactions []models.Transaction
+	result := repo.Database.DB.Where("user_id = ?", userId).Find(&transactions)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return transactions, nil
 }

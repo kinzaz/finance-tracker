@@ -3,6 +3,7 @@ package transactions
 import (
 	"errors"
 	"finance-tracker/internal/errs"
+	"finance-tracker/pkg/middleware"
 	"finance-tracker/pkg/request"
 	"finance-tracker/pkg/response"
 	"net/http"
@@ -17,18 +18,35 @@ func NewTransactionsController(router *http.ServeMux, transactionsService Transa
 		TransactionService: transactionsService,
 	}
 
-	router.HandleFunc("POST /transaction", handler.Create())
-	router.HandleFunc("DELETE /transaction/{id}", handler.Delete())
+	router.Handle("GET /transactions", middleware.IsAuthed(handler.GetUserTransactions()))
+
+	router.Handle("POST /transaction", middleware.IsAuthed(handler.Create()))
+	router.Handle("DELETE /transaction/{id}", middleware.IsAuthed(handler.Delete()))
+}
+
+func (controller *TransactionsController) GetUserTransactions() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId, _ := r.Context().Value(middleware.ContextIdKey).(uint)
+
+		res, err := controller.TransactionService.GetUserTransactions(userId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		response.Json(w, res, http.StatusOK)
+	}
 }
 
 func (controller *TransactionsController) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		id, _ := r.Context().Value(middleware.ContextIdKey).(uint)
 		dto, err := request.HandleBody[TransactionRequestDto](w, r)
 		if err != nil {
 			return
 		}
 
-		res, err := controller.TransactionService.CreateTransaction(dto)
+		res, err := controller.TransactionService.CreateTransaction(id, dto)
 		if err != nil {
 			if errors.Is(err, errs.ErrInvalidTransactionType) {
 				http.Error(w, err.Error(), http.StatusBadRequest)

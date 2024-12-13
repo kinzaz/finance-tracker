@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"errors"
+	"finance-tracker/internal/errs"
 	"finance-tracker/pkg/jwt"
 	"finance-tracker/pkg/request"
 	"finance-tracker/pkg/response"
@@ -28,7 +30,16 @@ func (controller AuthController) Register() http.HandlerFunc {
 			return
 		}
 
-		res, _ := controller.AuthService.Register(dto)
+		res, err := controller.AuthService.Register(dto)
+		if err != nil {
+			if errors.Is(err, errs.ErrRegisterUser) {
+				http.Error(w, err.Error(), http.StatusConflict)
+				return
+			} else {
+				http.Error(w, err.Error(), http.StatusConflict)
+				return
+			}
+		}
 
 		response.Json(w, res, http.StatusCreated)
 	}
@@ -41,14 +52,15 @@ func (controller AuthController) Login() http.HandlerFunc {
 			return
 		}
 
-		email, err := controller.AuthService.Login(dto)
+		user, err := controller.AuthService.Login(dto)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		token, err := jwt.GenerateJWT(jwt.JWTData{
-			Email: email,
+		token, err := jwt.GenerateJWT(jwt.CustomClaims{
+			Email: user.Email,
+			ID:    user.ID,
 		})
 
 		if err != nil {

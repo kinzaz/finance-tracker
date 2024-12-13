@@ -6,7 +6,8 @@ import (
 )
 
 type TransactionsServiceInterface interface {
-	CreateTransaction(dto *TransactionRequestDto) (*TransactionResponseDto, error)
+	GetUserTransactions(userId uint) ([]models.Transaction, error)
+	CreateTransaction(userId uint, dto *TransactionRequestDto) (*TransactionResponseDto, error)
 	DeleteTransaction(id uint) error
 }
 
@@ -22,18 +23,18 @@ func NewTransactionsService(transactionsRepository TransactionsRepositoryInterfa
 	}
 }
 
-func (service *TransactionsService) CreateTransaction(dto *TransactionRequestDto) (*TransactionResponseDto, error) {
+func (service *TransactionsService) CreateTransaction(userId uint, dto *TransactionRequestDto) (*TransactionResponseDto, error) {
 	if err := dto.Type.Validate(); err != nil {
 		return nil, err
 	}
 
-	_, err := service.UserRepository.FindById(dto.UserID)
+	_, err := service.UserRepository.FindById(userId)
 	if err != nil {
 		return nil, err
 	}
 
 	transactionEntity := &models.Transaction{
-		UserID:      dto.UserID,
+		UserID:      userId,
 		Type:        dto.Type,
 		Amount:      dto.Amount,
 		Description: dto.Description,
@@ -62,4 +63,12 @@ func (service *TransactionsService) DeleteTransaction(id uint) error {
 		return err
 	}
 	return nil
+}
+
+func (service *TransactionsService) GetUserTransactions(userId uint) ([]models.Transaction, error) {
+	result, err := service.TransactionsRepository.GetTransactionsByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

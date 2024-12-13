@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"finance-tracker/internal/errs"
 	"finance-tracker/internal/models"
 	"finance-tracker/internal/user"
 
@@ -10,7 +11,7 @@ import (
 
 type AuthServiceInterface interface {
 	Register(dto *RegisterRequestDto) (*RegisterResponseDto, error)
-	Login(dto *LoginRequestDto) (string, error)
+	Login(dto *LoginRequestDto) (*models.User, error)
 }
 
 type AuthService struct {
@@ -23,25 +24,25 @@ func NewAuthService(userRepository user.UserRepositoryInterface) *AuthService {
 	}
 }
 
-func (service *AuthService) Login(dto *LoginRequestDto) (string, error) {
+func (service *AuthService) Login(dto *LoginRequestDto) (*models.User, error) {
 	existedUser, _ := service.UserRepository.FindByEmail(dto.Email)
 
 	if existedUser == nil {
-		return "", errors.New("неверный логин или пароль")
+		return existedUser, errors.New("неверный логин или пароль")
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(existedUser.Password), []byte(dto.Password))
 	if err != nil {
-		return "", errors.New("неверный логин или пароль")
+		return existedUser, errors.New("неверный логин или пароль")
 	}
 
-	return existedUser.Email, nil
+	return existedUser, nil
 }
 
 func (service *AuthService) Register(dto *RegisterRequestDto) (*RegisterResponseDto, error) {
 	existedUser, _ := service.UserRepository.FindByEmail(dto.Email)
 	if existedUser != nil {
-		return nil, errors.New("такой пользователь уже зарегистрирован")
+		return nil, errs.ErrRegisterUser
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)

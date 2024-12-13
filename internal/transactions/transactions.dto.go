@@ -6,7 +6,6 @@ import (
 )
 
 type TransactionRequestDto struct {
-	UserID      uint                  `json:"user_id"`
 	Type        types.TransactionType `json:"type"`
 	Amount      float64               `json:"amount"`
 	Description string                `json:"description"`
