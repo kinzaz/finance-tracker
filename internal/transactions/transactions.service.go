@@ -7,6 +7,7 @@ import (
 
 type TransactionsServiceInterface interface {
 	GetUserTransactions(userId uint) ([]models.Transaction, error)
+	GetUserTransaction(userId, transactionId uint) (*models.Transaction, error)
 	CreateTransaction(userId uint, dto *TransactionRequestDto) (*TransactionResponseDto, error)
 	DeleteTransaction(id uint) error
 }
@@ -63,6 +64,14 @@ func (service *TransactionsService) DeleteTransaction(id uint) error {
 
 func (service *TransactionsService) GetUserTransactions(userId uint) ([]models.Transaction, error) {
 	result, err := service.TransactionsRepository.GetTransactionsByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (service *TransactionsService) GetUserTransaction(userId, transactionId uint) (*models.Transaction, error) {
+	result, err := service.TransactionsRepository.GetTransactionById(userId, transactionId)
 	if err != nil {
 		return nil, err
 	}

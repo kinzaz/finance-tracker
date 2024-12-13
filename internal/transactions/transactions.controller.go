@@ -20,8 +20,33 @@ func NewTransactionsController(router *http.ServeMux, transactionsService Transa
 
 	router.Handle("GET /transactions", middleware.IsAuthed(handler.GetUserTransactions()))
 
+	router.Handle("GET /transaction/{id}", middleware.IsAuthed(handler.GetUserTransaction()))
 	router.Handle("POST /transaction", middleware.IsAuthed(handler.Create()))
 	router.Handle("DELETE /transaction/{id}", middleware.IsAuthed(handler.Delete()))
+}
+
+func (controller *TransactionsController) GetUserTransaction() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId, _ := r.Context().Value(middleware.ContextIdKey).(uint)
+		transactionId, err := request.GetParam[uint](r, "id")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		res, err := controller.TransactionService.GetUserTransaction(userId, transactionId)
+		if err != nil {
+			if errors.Is(err, errs.ErrTransactionNotFound) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		response.Json(w, res, http.StatusOK)
+	}
 }
 
 func (controller *TransactionsController) GetUserTransactions() http.HandlerFunc {
