@@ -10,6 +10,7 @@ type TransactionsServiceInterface interface {
 	GetUserTransaction(userId, transactionId uint) (*models.Transaction, error)
 	CreateTransaction(userId uint, dto *TransactionRequestDto) (*TransactionResponseDto, error)
 	DeleteTransaction(id uint) error
+	UpdateTransaction(id uint, dto *TransactionUpdateRequestDto) (*models.Transaction, error)
 }
 
 type TransactionsService struct {
@@ -60,6 +61,13 @@ func (service *TransactionsService) DeleteTransaction(id uint) error {
 		return err
 	}
 	return nil
+}
+func (service *TransactionsService) UpdateTransaction(id uint, dto *TransactionUpdateRequestDto) (*models.Transaction, error) {
+	updatedTransaction, err := service.TransactionsRepository.Update(id, dto)
+	if err != nil {
+		return nil, err
+	}
+	return updatedTransaction, nil
 }
 
 func (service *TransactionsService) GetUserTransactions(userId uint) ([]models.Transaction, error) {

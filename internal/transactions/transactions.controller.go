@@ -23,6 +23,7 @@ func NewTransactionsController(router *http.ServeMux, transactionsService Transa
 	router.Handle("GET /transaction/{id}", middleware.IsAuthed(handler.GetUserTransaction()))
 	router.Handle("POST /transaction", middleware.IsAuthed(handler.Create()))
 	router.Handle("DELETE /transaction/{id}", middleware.IsAuthed(handler.Delete()))
+	router.Handle("PATCH /transaction/{id}", middleware.IsAuthed(handler.Update()))
 }
 
 func (controller *TransactionsController) GetUserTransaction() http.HandlerFunc {
@@ -37,7 +38,7 @@ func (controller *TransactionsController) GetUserTransaction() http.HandlerFunc 
 		res, err := controller.TransactionService.GetUserTransaction(userId, transactionId)
 		if err != nil {
 			if errors.Is(err, errs.ErrTransactionNotFound) {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -77,7 +78,7 @@ func (controller *TransactionsController) Create() http.HandlerFunc {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			} else if errors.Is(err, errs.ErrUserNotFound) {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -100,7 +101,7 @@ func (controller *TransactionsController) Delete() http.HandlerFunc {
 		err = controller.TransactionService.DeleteTransaction(id)
 		if err != nil {
 			if errors.Is(err, errs.ErrTransactionNotFound) {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			} else {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -109,5 +110,40 @@ func (controller *TransactionsController) Delete() http.HandlerFunc {
 		}
 
 		response.Json(w, nil, http.StatusOK)
+	}
+}
+
+func (controller *TransactionsController) Update() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := request.GetParam[uint](r, "id")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		dto, err := request.HandleBody[TransactionUpdateRequestDto](w, r)
+		if err != nil {
+			return
+		}
+
+		updatedTransaction, err := controller.TransactionService.UpdateTransaction(id, dto)
+		if err != nil {
+			if errors.Is(err, errs.ErrTransactionNotFound) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		response.Json(w, TransactionResponseDto{
+			ID:          updatedTransaction.ID,
+			UserID:      updatedTransaction.UserID,
+			Type:        updatedTransaction.Type,
+			Description: updatedTransaction.Description,
+			Amount:      updatedTransaction.Amount,
+			Date:        updatedTransaction.Date,
+		}, http.StatusOK)
 	}
 }

@@ -20,3 +20,19 @@ type TransactionResponseDto struct {
 	Description string                `json:"description"`
 	Date        time.Time             `json:"date"`
 }
+
+type TransactionUpdateRequestDto struct {
+	Type        *types.TransactionType `json:"type"`
+	Amount      *float64               `json:"amount"`
+	Description *string                `json:"description"`
+	Date        *time.Time             `json:"date"`
+}
+
+type TransactionUpdateResponseDto struct {
+	ID          uint                  `json:"id"`
+	UserID      uint                  `json:"user_id"`
+	Type        types.TransactionType `json:"type"`
+	Amount      float64               `json:"amount"`
+	Description string                `json:"description"`
+	Date        time.Time             `json:"date"`
+}
