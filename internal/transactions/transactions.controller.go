@@ -80,6 +80,9 @@ func (controller *TransactionsController) Create() http.HandlerFunc {
 			} else if errors.Is(err, errs.ErrUserNotFound) {
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return
+			} else if errors.Is(err, errs.ErrInsufficientBalance) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
 			} else {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 				return

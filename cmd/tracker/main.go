@@ -23,10 +23,12 @@ func main() {
 
 	/* Services */
 	authService := auth.NewAuthService(userRepository)
+	userService := user.NewUserService(userRepository)
 	transactionsService := transactions.NewTransactionsService(transactionsRepository, userRepository)
 
 	/* Controllers */
 	auth.NewAuthController(router, authService)
+	user.NewUserController(router, userService)
 	transactions.NewTransactionsController(router, transactionsService)
 
 	server := http.Server{

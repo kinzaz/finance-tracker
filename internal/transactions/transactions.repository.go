@@ -30,9 +30,37 @@ func NewTransactionRepository(database *database.Database) *TransactionsReposito
 }
 
 func (repo *TransactionsRepository) Create(transaction *models.Transaction) (*models.Transaction, error) {
-	result := repo.Database.DB.Create(transaction)
-	if result.Error != nil {
-		return nil, result.Error
+	errTransaction := repo.Database.DB.Transaction(func(tx *gorm.DB) error {
+
+		var user models.User
+		if err := tx.First(&user, transaction.UserID).Error; err != nil {
+			return errs.ErrUserNotFound
+		}
+
+		if transaction.Type == "income" {
+			user.Balance += transaction.Amount
+		} else if transaction.Type == "expense" {
+			if user.Balance < transaction.Amount {
+				return errs.ErrInsufficientBalance
+			}
+			user.Balance -= transaction.Amount
+		} else {
+			return errs.ErrInvalidTransactionType
+		}
+
+		if err := tx.Model(&user).Update("balance", user.Balance).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Create(&transaction).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if errTransaction != nil {
+		return nil, errTransaction
 	}
 
 	return transaction, nil
