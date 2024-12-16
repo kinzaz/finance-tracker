@@ -15,7 +15,7 @@ type TransactionsRepositoryInterface interface {
 	Delete(id uint) error
 	Update(id uint, dto *TransactionUpdateRequestDto) (*models.Transaction, error)
 	FindTransactionById(id uint) error
-	GetTransactionsByUserId(userId uint) ([]models.Transaction, error)
+	GetTransactionsByUserId(userId uint, filters TransactionsFilter) ([]models.Transaction, error)
 	GetTransactionById(userId, transactionId uint) (*models.Transaction, error)
 }
 
@@ -111,12 +111,12 @@ func (repo *TransactionsRepository) FindTransactionById(id uint) error {
 	return nil
 }
 
-func (repo *TransactionsRepository) GetTransactionsByUserId(userId uint) ([]models.Transaction, error) {
+func (repo *TransactionsRepository) GetTransactionsByUserId(userId uint, filters TransactionsFilter) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	result := repo.Database.DB.Where("user_id = ?", userId).Find(&transactions)
+	query := buildTransactionQuery(repo.Database.DB, filters)
 
-	if result.Error != nil {
-		return nil, result.Error
+	if err := query.Find(&transactions).Error; err != nil {
+		return nil, err
 	}
 
 	return transactions, nil
@@ -133,6 +133,45 @@ func (repo *TransactionsRepository) GetTransactionById(userId, id uint) (*models
 	}
 
 	return &transaction, nil
+}
+
+func buildTransactionQuery(db *gorm.DB, filters TransactionsFilter) *gorm.DB {
+	query := db.Model(&models.Transaction{})
+
+	if filters.DateFrom != nil {
+		query = query.Where("Date(date) >= ?", *filters.DateFrom)
+	}
+	if filters.DateTo != nil {
+		query = query.Where("Date(date) <= ?", *filters.DateTo)
+	}
+	if filters.Type != nil {
+		query = query.Where("type = ?", *filters.Type)
+	}
+	if filters.MinAmount != nil {
+		query = query.Where("amount >= ?", *filters.MinAmount)
+	}
+	if filters.MaxAmount != nil {
+		query = query.Where("amount <= ?", *filters.MaxAmount)
+	}
+
+	if filters.SortBy != nil && filters.SortOrder != nil {
+		sortField := ""
+		if *filters.SortBy == "amount" {
+			sortField = "amount"
+		} else if *filters.SortBy == "date" {
+			sortField = "date"
+		}
+
+		if sortField != "" {
+			order := "asc"
+			if *filters.SortOrder == "desc" {
+				order = "desc"
+			}
+			query = query.Order(fmt.Sprintf("%s %s", sortField, order))
+		}
+	}
+
+	return query
 }
 
 // func buildUpdates(dto *TransactionUpdateRequestDto) map[string]interface{} {

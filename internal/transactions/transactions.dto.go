@@ -36,3 +36,13 @@ type TransactionUpdateResponseDto struct {
 	Description string                `json:"description"`
 	Date        time.Time             `json:"date"`
 }
+
+type TransactionsFilter struct {
+	DateTo    *time.Time             `json:"date_to"`
+	DateFrom  *time.Time             `json:"date_from"`
+	Type      *types.TransactionType `json:"type"`
+	MinAmount *float64               `json:"min_amount"`
+	MaxAmount *float64               `json:"max_amount"`
+	SortBy    *string                `json:"sort_by"`
+	SortOrder *string                `json:"sort_order"`
+}

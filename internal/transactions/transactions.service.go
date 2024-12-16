@@ -6,7 +6,7 @@ import (
 )
 
 type TransactionsServiceInterface interface {
-	GetUserTransactions(userId uint) ([]models.Transaction, error)
+	GetUserTransactions(userId uint, filters TransactionsFilter) ([]models.Transaction, error)
 	GetUserTransaction(userId, transactionId uint) (*models.Transaction, error)
 	CreateTransaction(userId uint, dto *TransactionRequestDto) (*TransactionResponseDto, error)
 	DeleteTransaction(id uint) error
@@ -70,8 +70,8 @@ func (service *TransactionsService) UpdateTransaction(id uint, dto *TransactionU
 	return updatedTransaction, nil
 }
 
-func (service *TransactionsService) GetUserTransactions(userId uint) ([]models.Transaction, error) {
-	result, err := service.TransactionsRepository.GetTransactionsByUserId(userId)
+func (service *TransactionsService) GetUserTransactions(userId uint, filters TransactionsFilter) ([]models.Transaction, error) {
+	result, err := service.TransactionsRepository.GetTransactionsByUserId(userId, filters)
 	if err != nil {
 		return nil, err
 	}
