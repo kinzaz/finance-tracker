@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"errors"
+	"finance-tracker/internal/dto"
 	"finance-tracker/internal/errs"
 	"finance-tracker/internal/models"
 	"finance-tracker/pkg/database"
@@ -15,7 +16,7 @@ type TransactionsRepositoryInterface interface {
 	Delete(id uint) error
 	Update(id uint, dto *TransactionUpdateRequestDto) (*models.Transaction, error)
 	FindTransactionById(id uint) error
-	GetTransactionsByUserId(userId uint, filters TransactionsFilter) ([]models.Transaction, error)
+	GetTransactionsByUserId(userId uint, filters TransactionsFilter, pagination dto.PaginationRequestDto) ([]models.Transaction, int, error)
 	GetTransactionById(userId, transactionId uint) (*models.Transaction, error)
 }
 
@@ -111,17 +112,27 @@ func (repo *TransactionsRepository) FindTransactionById(id uint) error {
 	return nil
 }
 
-func (repo *TransactionsRepository) GetTransactionsByUserId(userId uint, filters TransactionsFilter) ([]models.Transaction, error) {
+func (repo *TransactionsRepository) GetTransactionsByUserId(userId uint, filters TransactionsFilter, pagination dto.PaginationRequestDto) ([]models.Transaction, int, error) {
 	var transactions []models.Transaction
+	var totalCount int64
+
 	query := repo.Database.DB.Model(&models.Transaction{}).Where("user_id = ?", userId)
 
 	query = buildTransactionQuery(query, filters)
 
-	if err := query.Find(&transactions).Error; err != nil {
-		return nil, err
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return transactions, nil
+	if err := query.Find(&transactions).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Limit(pagination.Limit).Offset(pagination.Offset).Find(&transactions).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return transactions, int(totalCount), nil
 }
 
 func (repo *TransactionsRepository) GetTransactionById(userId, id uint) (*models.Transaction, error) {

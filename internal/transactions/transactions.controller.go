@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"errors"
+	"finance-tracker/internal/dto"
 	"finance-tracker/internal/errs"
 	"finance-tracker/internal/types"
 	"finance-tracker/pkg/middleware"
@@ -59,6 +60,21 @@ func (controller *TransactionsController) GetUserTransactions() http.HandlerFunc
 		queryParams := r.URL.Query()
 		filters := TransactionsFilter{}
 
+		limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+		if err != nil || limit <= 0 {
+			limit = 10
+		}
+
+		offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+		if err != nil || offset < 0 {
+			offset = 0
+		}
+
+		pagination := dto.PaginationRequestDto{
+			Limit:  limit,
+			Offset: offset,
+		}
+
 		if err := parseDateFilter(queryParams.Get("date_from"), &filters.DateFrom); err != nil {
 			http.Error(w, "Invalid date_from format", http.StatusBadRequest)
 			return
@@ -92,7 +108,7 @@ func (controller *TransactionsController) GetUserTransactions() http.HandlerFunc
 			filters.SortOrder = &sortOrder
 		}
 
-		res, err := controller.TransactionService.GetUserTransactions(userId, filters)
+		res, err := controller.TransactionService.GetUserTransactions(userId, filters, pagination)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

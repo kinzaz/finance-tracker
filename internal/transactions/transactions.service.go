@@ -1,12 +1,13 @@
 package transactions
 
 import (
+	"finance-tracker/internal/dto"
 	"finance-tracker/internal/models"
 	"finance-tracker/internal/user"
 )
 
 type TransactionsServiceInterface interface {
-	GetUserTransactions(userId uint, filters TransactionsFilter) ([]models.Transaction, error)
+	GetUserTransactions(userId uint, filters TransactionsFilter, pagination dto.PaginationRequestDto) (dto.PaginationResponseDto[models.Transaction], error)
 	GetUserTransaction(userId, transactionId uint) (*models.Transaction, error)
 	CreateTransaction(userId uint, dto *TransactionRequestDto) (*TransactionResponseDto, error)
 	DeleteTransaction(id uint) error
@@ -70,12 +71,20 @@ func (service *TransactionsService) UpdateTransaction(id uint, dto *TransactionU
 	return updatedTransaction, nil
 }
 
-func (service *TransactionsService) GetUserTransactions(userId uint, filters TransactionsFilter) ([]models.Transaction, error) {
-	result, err := service.TransactionsRepository.GetTransactionsByUserId(userId, filters)
+func (service *TransactionsService) GetUserTransactions(userId uint, filters TransactionsFilter, pagination dto.PaginationRequestDto) (dto.PaginationResponseDto[models.Transaction], error) {
+	transactions, totalCount, err := service.TransactionsRepository.GetTransactionsByUserId(userId, filters, pagination)
 	if err != nil {
-		return nil, err
+		return dto.PaginationResponseDto[models.Transaction]{}, err
 	}
-	return result, nil
+
+	response := dto.PaginationResponseDto[models.Transaction]{
+		Items:      transactions,
+		TotalCount: totalCount,
+		Limit:      pagination.Limit,
+		Offset:     pagination.Offset,
+	}
+
+	return response, nil
 }
 
 func (service *TransactionsService) GetUserTransaction(userId, transactionId uint) (*models.Transaction, error) {
