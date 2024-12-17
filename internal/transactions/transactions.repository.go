@@ -113,7 +113,9 @@ func (repo *TransactionsRepository) FindTransactionById(id uint) error {
 
 func (repo *TransactionsRepository) GetTransactionsByUserId(userId uint, filters TransactionsFilter) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	query := buildTransactionQuery(repo.Database.DB, filters)
+	query := repo.Database.DB.Model(&models.Transaction{}).Where("user_id = ?", userId)
+
+	query = buildTransactionQuery(query, filters)
 
 	if err := query.Find(&transactions).Error; err != nil {
 		return nil, err
@@ -135,9 +137,7 @@ func (repo *TransactionsRepository) GetTransactionById(userId, id uint) (*models
 	return &transaction, nil
 }
 
-func buildTransactionQuery(db *gorm.DB, filters TransactionsFilter) *gorm.DB {
-	query := db.Model(&models.Transaction{})
-
+func buildTransactionQuery(query *gorm.DB, filters TransactionsFilter) *gorm.DB {
 	if filters.DateFrom != nil {
 		query = query.Where("Date(date) >= ?", *filters.DateFrom)
 	}
